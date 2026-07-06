@@ -163,7 +163,41 @@ function MyGuiLib:CreateWindow(Config)
 
         local TabObj = {}
 
-        -- МЕТОД: Переключатель (Toggle)
+        -- 1. МЕТОД: Кнопка (Button)
+        function TabObj:AddButton(ButtonConfig)
+            local ButtonFrame = Instance.new("Frame")
+            ButtonFrame.Size = UDim2.new(1, -5, 0, 38)
+            ButtonFrame.BackgroundColor3 = SelectedTheme.ElementBg
+            ButtonFrame.Parent = TabElementsFrame
+            Instance.new("UICorner", ButtonFrame).CornerRadius = UDim.new(0, 6)
+
+            local ClickBtn = Instance.new("TextButton")
+            ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+            ClickBtn.BackgroundTransparency = 1
+            ClickBtn.Text = "  " .. (ButtonConfig.Title or "Button")
+            ClickBtn.TextColor3 = SelectedTheme.Text
+            ClickBtn.Font = Enum.Font.GothamMedium
+            ClickBtn.TextSize = 13
+            ClickBtn.TextXAlignment = Enum.TextXAlignment.Left
+            ClickBtn.Parent = ButtonFrame
+
+            local ArrowLabel = Instance.new("TextLabel")
+            ArrowLabel.Size = UDim2.new(0, 30, 1, 0)
+            ArrowLabel.Position = UDim2.new(1, -35, 0, 0)
+            ArrowLabel.Text = ">"
+            ArrowLabel.TextColor3 = SelectedTheme.SecondaryText
+            ArrowLabel.Font = Enum.Font.GothamBold
+            ArrowLabel.TextSize = 14
+            ArrowLabel.TextXAlignment = Enum.TextXAlignment.Right
+            ArrowLabel.BackgroundTransparency = 1
+            ArrowLabel.Parent = ClickBtn
+
+            ClickBtn.MouseButton1Click:Connect(function()
+                if ButtonConfig.Callback then ButtonConfig.Callback() end
+            end)
+        end
+
+        -- 2. МЕТОД: Переключатель (Toggle)
         function TabObj:AddToggle(ToggleID, ToggleConfig)
             local ToggleFrame = Instance.new("Frame")
             ToggleFrame.Size = UDim2.new(1, -5, 0, 38)
@@ -201,7 +235,7 @@ function MyGuiLib:CreateWindow(Config)
             return State
         end
 
-        -- МЕТОД: Слайдер с точным отображением числовых значений справа
+        -- 3. МЕТОД: Ползунок (Slider)
         function TabObj:AddSlider(SliderID, SliderConfig)
             local Min = SliderConfig.Min or 0
             local Max = SliderConfig.Max or 100
@@ -274,7 +308,7 @@ function MyGuiLib:CreateWindow(Config)
             return SliderState
         end
 
-        -- МЕТОД: Выпадающий список с ОТОБРАЖЕНИЕМ выбранного мода справа
+        -- 4. МЕТОД: Выпадающий список (Dropdown)
         function TabObj:AddDropdown(DropdownID, DropdownConfig)
             local Items = DropdownConfig.Values or {}
             local TitleText = DropdownConfig.Title or "Dropdown"
@@ -355,7 +389,50 @@ function MyGuiLib:CreateWindow(Config)
             return DropdownState
         end
 
-        -- МЕТОД: Автономный ColorPicker с гарантированной отрисовкой радужной палитры
+        -- 5. МЕТОД: Поле ввода текста (Input)
+        function TabObj:AddInput(InputID, InputConfig)
+            local InputFrame = Instance.new("Frame")
+            InputFrame.Size = UDim2.new(1, -5, 0, 38)
+            InputFrame.BackgroundColor3 = SelectedTheme.ElementBg
+            InputFrame.Parent = TabElementsFrame
+            Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 6)
+
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(0.6, 0, 1, 0)
+            Label.Position = UDim2.new(0, 10, 0, 0)
+            Label.Text = InputConfig.Title or "Input"
+            Label.TextColor3 = SelectedTheme.Text
+            Label.Font = Enum.Font.Gotham
+            Label.TextSize = 13
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.BackgroundTransparency = 1
+            Label.Parent = InputFrame
+
+            local Box = Instance.new("TextBox")
+            Box.Size = UDim2.new(0.35, 0, 0, 24)
+            Box.Position = UDim2.new(1, -10, 0, 7)
+            Box.AnchorPoint = Vector2.new(1, 0)
+            Box.BackgroundColor3 = SelectedTheme.SidebarBg
+            Box.Text = InputConfig.Default or ""
+            Box.PlaceholderText = InputConfig.Placeholder or "Type..."
+            Box.TextColor3 = SelectedTheme.Text
+            Box.PlaceholderColor3 = SelectedTheme.SecondaryText
+            Box.Font = Enum.Font.Gotham
+            Box.TextSize = 12
+            Box.ClipsDescendants = true
+            Box.Parent = InputFrame
+            Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 4)
+
+            local InputState = { Value = Box.Text }
+            Box.FocusLost:Connect(function(enterPressed)
+                InputState.Value = Box.Text
+                if InputConfig.Callback then InputConfig.Callback(Box.Text, enterPressed) end
+            end)
+
+            return InputState
+        end
+
+        -- 6. МЕТОД: Цветовая палитра (ColorPicker)
         function TabObj:AddColorPicker(PickerID, PickerConfig)
             local DefaultColor = PickerConfig.Default or Color3.fromRGB(255, 255, 255)
             
