@@ -3,7 +3,6 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
--- Дефолтная палитра цветов (Неоновый Аква / Циан со скриншота)
 local Themes = {
     Dark = {
         Background = Color3.fromRGB(15, 22, 28),
@@ -12,14 +11,6 @@ local Themes = {
         Accent = Color3.fromRGB(0, 230, 255),
         Text = Color3.fromRGB(255, 255, 255),
         SecondaryText = Color3.fromRGB(140, 160, 170)
-    },
-    PurpleNeon = { -- Пример кастомной темы (Фиолетовый неон)
-        Background = Color3.fromRGB(20, 15, 28),
-        SidebarBg = Color3.fromRGB(15, 12, 23),
-        ElementBg = Color3.fromRGB(28, 20, 35),
-        Accent = Color3.fromRGB(180, 0, 255),
-        Text = Color3.fromRGB(255, 255, 255),
-        SecondaryText = Color3.fromRGB(160, 140, 170)
     }
 }
 
@@ -27,9 +18,7 @@ function MyGuiLib:CreateWindow(Config)
     local TitleText = Config.Title or "Premium Panel"
     local SubTitleText = Config.SubTitle or "v1.0"
     local Size = Config.Size or UDim2.fromOffset(580, 480)
-    
-    -- Динамический выбор темы ("Dark", "PurpleNeon" или своя кастомная таблица цветов)
-    local SelectedTheme = Themes[Config.Theme] or Config.Theme or Themes.Dark
+    local SelectedTheme = Themes[Config.Theme] or Themes.Dark
 
     if CoreGui:FindFirstChild("MyCustomNeonUI") then
         CoreGui:FindFirstChild("MyCustomNeonUI"):Destroy()
@@ -40,7 +29,6 @@ function MyGuiLib:CreateWindow(Config)
     ScreenGui.Parent = CoreGui
     ScreenGui.ResetOnSpawn = false
 
-    -- Главное Окно
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = Size
@@ -54,14 +42,12 @@ function MyGuiLib:CreateWindow(Config)
     MainCorner.CornerRadius = UDim.new(0, 12)
     MainCorner.Parent = MainFrame
 
-    -- Свечение / Обводка в цвет Акцента темы
     local UIStroke = Instance.new("UIStroke")
     UIStroke.Thickness = 2
     UIStroke.Color = SelectedTheme.Accent
     UIStroke.Transparency = 0.3
     UIStroke.Parent = MainFrame
 
-    -- Шапка окна
     local Header = Instance.new("Frame")
     Header.Name = "Header"
     Header.Size = UDim2.new(1, 0, 0, 45)
@@ -90,45 +76,33 @@ function MyGuiLib:CreateWindow(Config)
     SubTitle.BackgroundTransparency = 1
     SubTitle.Parent = Header
 
-    -- Сайдбар для Категорий
     local Sidebar = Instance.new("Frame")
-    Sidebar.Name = "Sidebar"
     Sidebar.Position = UDim2.new(0, 10, 0, 55)
     Sidebar.Size = UDim2.new(0, 150, 1, -65)
     Sidebar.BackgroundColor3 = SelectedTheme.SidebarBg
     Sidebar.BackgroundTransparency = 0.5
     Sidebar.Parent = MainFrame
-
-    local SideCorner = Instance.new("UICorner")
-    SideCorner.CornerRadius = UDim.new(0, 8)
-    SideCorner.Parent = Sidebar
+    Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 8)
 
     local SidebarLayout = Instance.new("UIListLayout")
     SidebarLayout.Padding = UDim.new(0, 5)
     SidebarLayout.Parent = Sidebar
 
     local ContentPage = Instance.new("Frame")
-    ContentPage.Name = "ContentPage"
     ContentPage.Position = UDim2.new(0, 170, 0, 55)
     ContentPage.Size = UDim2.new(1, -180, 1, -65)
     ContentPage.BackgroundTransparency = 1
     ContentPage.Parent = MainFrame
 
-    -- Драг (Перетаскивание)
+    -- Драг окна
     local dragging, dragInput, dragStart, startPos
     Header.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = MainFrame.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
-            end)
+            dragging = true; dragStart = input.Position; startPos = MainFrame.Position
+            input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
         end
     end)
-    Header.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
-    end)
+    Header.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end end)
     UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
@@ -136,17 +110,9 @@ function MyGuiLib:CreateWindow(Config)
         end
     end)
 
-    -- Сворачивание
-    UserInputService.InputBegan:Connect(function(input, gpe)
-        if not gpe and input.KeyCode == (Config.MinimizeKey or Enum.KeyCode.LeftControl) then
-            ScreenGui.Enabled = not ScreenGui.Enabled
-        end
-    end)
-
     local WindowObj = {}
     local firstTab = true
 
-    -- МЕТОД: Добавление Категории (Вкладки)
     function WindowObj:AddTab(TabConfig)
         local TabName = TabConfig.Title or "Tab"
         
@@ -173,10 +139,7 @@ function MyGuiLib:CreateWindow(Config)
         TabButton.Font = Enum.Font.GothamMedium
         TabButton.TextXAlignment = Enum.TextXAlignment.Left
         TabButton.Parent = Sidebar
-
-        local TabCorner = Instance.new("UICorner")
-        TabCorner.CornerRadius = UDim.new(0, 6)
-        TabCorner.Parent = TabButton
+        Instance.new("UICorner", TabButton).CornerRadius = UDim.new(0, 6)
 
         if firstTab then firstTab = false end
 
@@ -195,7 +158,7 @@ function MyGuiLib:CreateWindow(Config)
 
         local TabObj = {}
 
-        -- МОДУЛЬ: Переключатель (Toggle)
+        -- МЕТОД: Toggle
         function TabObj:AddToggle(ToggleID, ToggleConfig)
             local ToggleFrame = Instance.new("Frame")
             ToggleFrame.Size = UDim2.new(1, -5, 0, 38)
@@ -233,20 +196,20 @@ function MyGuiLib:CreateWindow(Config)
             return State
         end
 
-        -- МОДУЛЬ: Ползунок (Slider) под дизайн ESP/Smoothing
+        -- МЕТОД: ИСПРАВЛЕННЫЙ СЛАЙДЕР С ТЕКУЩИМ ЧИСЛОМ
         function TabObj:AddSlider(SliderID, SliderConfig)
             local Min = SliderConfig.Min or 0
             local Max = SliderConfig.Max or 100
             local Default = SliderConfig.Default or Min
 
             local SliderFrame = Instance.new("Frame")
-            SliderFrame.Size = UDim2.new(1, -5, 0, 45)
+            SliderFrame.Size = UDim2.new(1, -5, 0, 50)
             SliderFrame.BackgroundColor3 = SelectedTheme.ElementBg
             SliderFrame.Parent = TabElementsFrame
             Instance.new("UICorner", SliderFrame).CornerRadius = UDim.new(0, 6)
 
             local Label = Instance.new("TextLabel")
-            Label.Size = UDim2.new(0.5, 0, 0, 20)
+            Label.Size = UDim2.new(0.5, 0, 0, 22)
             Label.Position = UDim2.new(0, 10, 0, 4)
             Label.Text = SliderConfig.Title or "Slider"
             Label.TextColor3 = SelectedTheme.Text
@@ -256,21 +219,21 @@ function MyGuiLib:CreateWindow(Config)
             Label.BackgroundTransparency = 1
             Label.Parent = SliderFrame
 
+            -- Текстовое поле с числом (Показывает сколько сейчас значение)
             local ValueLabel = Instance.new("TextLabel")
-            ValueLabel.Size = UDim2.new(0.4, 0, 0, 20)
-            ValueLabel.Position = UDim2.new(1, -95, 0, 4)
+            ValueLabel.Size = UDim2.new(0.4, 0, 0, 22)
+            ValueLabel.Position = UDim2.new(1, -15, 0, 4)
             ValueLabel.Text = tostring(Default)
             ValueLabel.TextColor3 = SelectedTheme.Accent
-            ValueLabel.Font = Enum.Font.GothamMedium
+            ValueLabel.Font = Enum.Font.GothamBold
             ValueLabel.TextSize = 13
             ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
             ValueLabel.BackgroundTransparency = 1
             ValueLabel.Parent = SliderFrame
 
-            -- Полоса слайдера
             local SliderBar = Instance.new("TextButton")
-            SliderBar.Size = UDim2.new(1, -20, 0, 4)
-            SliderBar.Position = UDim2.new(0, 10, 0, 30)
+            SliderBar.Size = UDim2.new(1, -20, 0, 5)
+            SliderBar.Position = UDim2.new(0, 10, 0, 34)
             SliderBar.BackgroundColor3 = Color3.fromRGB(50, 60, 70)
             SliderBar.Text = ""
             SliderBar.Parent = SliderFrame
@@ -289,21 +252,16 @@ function MyGuiLib:CreateWindow(Config)
             local function UpdateSlider(input)
                 local ratio = math.clamp((input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1)
                 SliderState.Value = math.floor(Min + ratio * (Max - Min))
-                ValueLabel.Text = tostring(SliderState.Value)
+                ValueLabel.Text = tostring(SliderState.Value) -- Обновление числа на ходу
                 SliderFill.Size = UDim2.new(ratio, 0, 1, 0)
                 if SliderConfig.Callback then SliderConfig.Callback(SliderState.Value) end
             end
 
             SliderBar.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    isSliding = true
-                    UpdateSlider(input)
-                end
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then isSliding = true; UpdateSlider(input) end
             end)
             UserInputService.InputChanged:Connect(function(input)
-                if isSliding and input.UserInputType == Enum.UserInputType.MouseMovement then
-                    UpdateSlider(input)
-                end
+                if isSliding and input.UserInputType == Enum.UserInputType.MouseMovement then UpdateSlider(input) end
             end)
             UserInputService.InputEnded:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then isSliding = false end
@@ -312,9 +270,10 @@ function MyGuiLib:CreateWindow(Config)
             return SliderState
         end
 
-        -- МОДУЛЬ: Выпадающий список (Dropdown)
+        -- МЕТОД: ИСПРАВЛЕННЫЙ ВЫПАДАЮЩИЙ СПИСОК (Пишет выбранный мод)
         function TabObj:AddDropdown(DropdownID, DropdownConfig)
             local Items = DropdownConfig.Values or {}
+            local TitleText = DropdownConfig.Title or "Dropdown"
             
             local DropdownFrame = Instance.new("Frame")
             DropdownFrame.Size = UDim2.new(1, -5, 0, 38)
@@ -326,17 +285,18 @@ function MyGuiLib:CreateWindow(Config)
             local DropdownBtn = Instance.new("TextButton")
             DropdownBtn.Size = UDim2.new(1, 0, 0, 38)
             DropdownBtn.BackgroundTransparency = 1
-            DropdownBtn.Text = "  " .. (DropdownConfig.Title or "Dropdown")
+            DropdownBtn.Text = "  " .. TitleText
             DropdownBtn.TextColor3 = SelectedTheme.Text
             DropdownBtn.Font = Enum.Font.Gotham
             DropdownBtn.TextSize = 13
             DropdownBtn.TextXAlignment = Enum.TextXAlignment.Left
             DropdownBtn.Parent = DropdownFrame
 
+            -- Показывает какой мод выбран прямо сейчас рядом с кнопкой
             local SelectedLabel = Instance.new("TextLabel")
-            SelectedLabel.Size = UDim2.new(0.4, 0, 1, 0)
-            SelectedLabel.Position = UDim2.new(1, -50, 0, 0)
-            SelectedLabel.Text = DropdownConfig.Default or "None"
+            SelectedLabel.Size = UDim2.new(0.5, 0, 1, 0)
+            SelectedLabel.Position = UDim2.new(1, -15, 0, 0)
+            SelectedLabel.Text = DropdownConfig.Default or "Not Selected"
             SelectedLabel.TextColor3 = SelectedTheme.Accent
             SelectedLabel.Font = Enum.Font.GothamMedium
             SelectedLabel.TextSize = 13
@@ -349,9 +309,7 @@ function MyGuiLib:CreateWindow(Config)
             DropdownList.Position = UDim2.new(0, 0, 0, 38)
             DropdownList.BackgroundTransparency = 1
             DropdownList.Parent = DropdownFrame
-
-            local ListLayout = Instance.new("UIListLayout")
-            ListLayout.Parent = DropdownList
+            Instance.new("UIListLayout", DropdownList)
 
             local IsOpen = false
             local DropdownState = { Value = DropdownConfig.Default }
@@ -367,7 +325,7 @@ function MyGuiLib:CreateWindow(Config)
                 local ItemBtn = Instance.new("TextButton")
                 ItemBtn.Size = UDim2.new(1, 0, 0, 28)
                 ItemBtn.BackgroundColor3 = SelectedTheme.SidebarBg
-                ItemBtn.BackgroundTransparency = 0.3
+                ItemBtn.BackgroundTransparency = 0.2
                 ItemBtn.Text = "    " .. item
                 ItemBtn.TextColor3 = SelectedTheme.SecondaryText
                 ItemBtn.Font = Enum.Font.Gotham
@@ -377,7 +335,7 @@ function MyGuiLib:CreateWindow(Config)
 
                 ItemBtn.MouseButton1Click:Connect(function()
                     DropdownState.Value = item
-                    SelectedLabel.Text = item
+                    SelectedLabel.Text = item -- Обновляем надпись мода
                     IsOpen = false
                     TweenService:Create(DropdownFrame, TweenInfo.new(0.2), { Size = UDim2.new(1, -5, 0, 38) }):Play()
                     if DropdownConfig.Callback then DropdownConfig.Callback(item) end
@@ -387,38 +345,85 @@ function MyGuiLib:CreateWindow(Config)
             return DropdownState
         end
 
-        -- МОДУЛЬ: Выбор цвета (ColorPicker)
+        -- МЕТОД: НОВЫЙ ПРОФЕССИОНАЛЬНЫЙ COLOR PICKER С ПАЛИТРОЙ
         function TabObj:AddColorPicker(PickerID, PickerConfig)
+            local DefaultColor = PickerConfig.Default or Color3.fromRGB(255, 255, 255)
+            
             local PickerFrame = Instance.new("Frame")
             PickerFrame.Size = UDim2.new(1, -5, 0, 38)
             PickerFrame.BackgroundColor3 = SelectedTheme.ElementBg
+            PickerFrame.ClipsDescendants = true
             PickerFrame.Parent = TabElementsFrame
             Instance.new("UICorner", PickerFrame).CornerRadius = UDim.new(0, 6)
 
-            local Label = Instance.new("TextLabel")
-            Label.Size = UDim2.new(0.6, 0, 1, 0)
-            Label.Position = UDim2.new(0, 10, 0, 0)
-            Label.Text = PickerConfig.Title or "Color Picker"
-            Label.TextColor3 = SelectedTheme.Text
-            Label.Font = Enum.Font.Gotham
-            Label.TextSize = 13
-            Label.TextXAlignment = Enum.TextXAlignment.Left
-            Label.BackgroundTransparency = 1
-            Label.Parent = PickerFrame
+            local ClickBtn = Instance.new("TextButton")
+            ClickBtn.Size = UDim2.new(1, 0, 0, 38)
+            ClickBtn.BackgroundTransparency = 1
+            ClickBtn.Text = "  " .. (PickerConfig.Title or "Color Picker")
+            ClickBtn.TextColor3 = SelectedTheme.Text
+            ClickBtn.Font = Enum.Font.Gotham
+            ClickBtn.TextSize = 13
+            ClickBtn.TextXAlignment = Enum.TextXAlignment.Left
+            ClickBtn.Parent = PickerFrame
 
-            local ColorBox = Instance.new("TextButton")
+            -- Квадратик текущего цвета
+            local ColorBox = Instance.new("Frame")
             ColorBox.Size = UDim2.fromOffset(24, 16)
             ColorBox.Position = UDim2.new(1, -34, 0, 11)
-            ColorBox.BackgroundColor3 = PickerConfig.Default or Color3.fromRGB(255,255,255)
-            ColorBox.Text = ""
-            ColorBox.Parent = PickerFrame
+            ColorBox.BackgroundColor3 = DefaultColor
+            ColorBox.Parent = ClickBtn
             Instance.new("UICorner", ColorBox).CornerRadius = UDim.new(0, 4)
 
-            -- Для простоты клик меняет цвет на случайный (можно расширить палитрой)
-            ColorBox.MouseButton1Click:Connect(function()
-                local NewColor = Color3.fromRGB(math.random(0,255), math.random(0,255), math.random(0,255))
-                ColorBox.BackgroundColor3 = NewColor
-                if PickerConfig.Callback then PickerConfig.Callback(NewColor) end
+            -- Контейнер палитры (Открывается вниз)
+            local PaletteContainer = Instance.new("Frame")
+            PaletteContainer.Position = UDim2.new(0, 10, 0, 42)
+            PaletteContainer.Size = UDim2.fromOffset(150, 150)
+            PaletteContainer.BackgroundTransparency = 1
+            PaletteContainer.Parent = PickerFrame
+
+            -- Картинка палитры (Цветовой круг)
+            local ColorWheel = Instance.new("ImageLabel")
+            ColorWheel.Size = UDim2.new(1, 0, 1, 0)
+            ColorWheel.Image = "http://www.roblox.com/asset/?id=6020615135" -- Ассет цветового круга Roblox
+            ColorWheel.BackgroundTransparency = 1
+            ColorWheel.Parent = PaletteContainer
+
+            local IsOpen = false
+            local CurrentColor = DefaultColor
+
+            ClickBtn.MouseButton1Click:Connect(function()
+                IsOpen = not IsOpen
+                TweenService:Create(PickerFrame, TweenInfo.new(0.2), {
+                    Size = IsOpen and UDim2.new(1, -5, 0, 200) or UDim2.new(1, -5, 0, 38)
+                }):Play()
+            end)
+
+            -- Логика выбора цвета на круге
+            local function UpdateColor(input)
+                local r = ColorWheel.AbsoluteSize.X / 2
+                local center = ColorWheel.AbsolutePosition + Vector2.new(r, r)
+                local delta = input.Position - center
+                local distance = delta.Magnitude
+
+                if distance <= r then
+                    local angle = math.atan2(delta.Y, delta.X)
+                    local hue = (angle + math.pi) / (2 * math.pi)
+                    local saturation = distance / r
+                    CurrentColor = Color3.fromHSV(hue, saturation, 1)
+                    ColorBox.BackgroundColor3 = CurrentColor
+                    if PickerConfig.Callback then PickerConfig.Callback(CurrentColor) end
+                end
+            end
+
+            local checkingColor = false
+            ColorWheel.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then checkingColor = true; UpdateColor(input) end
+            end)
+            UserInputService.InputChanged:Connect(function(input)
+                if checkingColor and input.UserInputType == Enum.UserInputType.MouseMovement then UpdateColor(input) end
+            end)
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then checkingColor = false end
             end)
         end
 
